@@ -2,7 +2,12 @@ print-%: ; @echo $*=$($*)
 
 RM       = rm -f
 CXX      = g++
-CXXFLAGS = -g -MMD -std=c++0x  -U__STRICT_ANSI__ -O2 -lOpenCL
+ifeq ($(PLATFORM), Linux)
+  OCLFLAGS = -lOpenCL
+else
+  OCLFLAGS = -framework OpenCL
+endif
+CXXFLAGS = -g -MMD -std=c++0x  -U__STRICT_ANSI__ -O2 $(OCLFLAGS)
 LDFLAGS  = -g -O2
 
 SRC_DIR=src
@@ -25,7 +30,7 @@ $(EXEC_SINGLE): $(OBJS_SINGLE)
 	$(CXX) $(LDFLAGS) -o $@ $^
 
 $(EXEC_OPENCL): $(OBJS_OPENCL)
-	$(CXX) $(LDFLAGS) -o $@ $^ -lOpenCL
+	$(CXX) $(LDFLAGS) -o $@ $^ $(OCLFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
