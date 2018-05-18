@@ -7,41 +7,49 @@ ifeq ($(PLATFORM), Linux)
 else
   OCLFLAGS = -framework OpenCL
 endif
+CUDAFLAGS = -L/usr/local/cuda/lib64 -lcuda -lcudart
 CXXFLAGS = -g -MMD -std=c++0x  -U__STRICT_ANSI__ -O2 $(OCLFLAGS)
 LDFLAGS  = -g -O2
 
 SRC_DIR=src
 OBJ_DIR=bin
 
-SRCS = $(shell find src -type f -name *.cpp)
+DEPS = $(shell find src -type f -name Vec*.cpp)
 
-OBJS_SINGLE = $(subst $(SRC_DIR)/,$(OBJ_DIR)/,$(subst .cpp,.o,$(SRCS)))
-EXEC_SINGLE = $(OBJ_DIR)/simu_single
+SRCS_SERIAL = $(DEPS) $(shell find src -type f -name *_serial.cpp)
+SRCS_OPENCL = $(DEPS) $(shell find src -type f -name *_ocl.cpp)
+SRCS_CUDA = $(DEPS) $(shell find src -type f -name *_cuda.cpp)
 
-OBJS_OPENCL = $(subst $(SRC_DIR)/,$(OBJ_DIR)/,$(subst .cpp,.o,$(SRCS)))
+OBJS_SERIAL = $(subst $(SRC_DIR)/,$(OBJ_DIR)/,$(subst .cpp,.o,$(SRCS_SERIAL)))
+EXEC_SERIAL = $(OBJ_DIR)/simu_serial
+
+OBJS_OPENCL = $(subst $(SRC_DIR)/,$(OBJ_DIR)/,$(subst .cpp,.o,$(SRCS_OPENCL)))
 EXEC_OPENCL = $(OBJ_DIR)/simu_ocl
 
-all: $(OBJ_DIR) $(EXEC_SINGLE) $(EXEC_OPENCL)
+OBJS_CUDA = $(subst $(SRC_DIR)/,$(OBJ_DIR)/,$(subst .cpp,.o,$(SRCS_CUDA)))
+EXEC_CUDA = $(OBJ_DIR)/simu_cuda
+
+all: $(OBJ_DIR) $(EXEC_SERIAL) $(EXEC_OPENCL) $(EXEC_CUDA)
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
-$(EXEC_SINGLE): $(OBJS_SINGLE)
+$(EXEC_SERIAL): $(OBJS_SERIAL)
 	$(CXX) $(LDFLAGS) -o $@ $^
 
 $(EXEC_OPENCL): $(OBJS_OPENCL)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(OCLFLAGS)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+$(EXEC_CUDA): $(OBJS_CUDA)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(CUDAFLAGS)
 
-$(OBJ_DIR)/ocl_%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 -include $(OBJ_DIR)/*.d
 
 clean:
-	$(RM) $(EXEC_SINGLE)
+	$(RM) $(EXEC_SERIAL)
 	$(RM) $(EXEC_OPENCL)
 	$(RM) $(OBJ_DIR)/*.o
 	$(RM) $(OBJ_DIR)/*.d

@@ -77,6 +77,10 @@ Vec3 Vec3::normal() const {
     return (*this) * factor;
 }
 
+Vec2 Vec3::transform() const{
+    return Vec2::Vec2(this->y, std::sqrt(std::pow(x, 2) + std::pow(z, 2)));
+}
+
 std::ostream &operator<<(std::ostream &os, Vec3 const &v) {
     os << "{"
        << v.x << ", "

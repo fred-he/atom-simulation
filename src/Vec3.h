@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include "Vec2.h"
 
 struct Vec3
 {
@@ -21,6 +22,7 @@ struct Vec3
 
     float magnitude() const;
     Vec3 normal() const;
+    Vec2 transform() const;
 };
 
 std::ostream &operator<<(std::ostream &os, Vec3 const &v);
